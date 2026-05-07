@@ -1,0 +1,22 @@
+# Environment
+.env
+
+# Models
+models/*.h5
+models/processor.pkl
+
+# Data
+data/__pycache__/
+data/*.csv
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+
+# VS Code
+.vscode/settings.json
