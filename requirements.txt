@@ -1,6 +1,7 @@
-streamlit
-google-generativeai
-python-dotenv
-numpy
 flask
 flask-cors
+python-dotenv
+numpy
+google-generativeai
+openai
+streamlit

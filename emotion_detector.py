@@ -1,9 +1,10 @@
 import numpy as np
 import pickle
-import google.generativeai as genai
-import re
 import os
+import re
 from dotenv import load_dotenv
+
+from openai import OpenAI
 
 try:
     import tensorflow as tf
@@ -16,7 +17,7 @@ except ImportError:
 load_dotenv()
 
 class EmotionDetector:
-    def __init__(self, gemini_api_key):
+    def __init__(self, api_key=None):
         if AUDIO_SUPPORT:
             try:
                 self.model = tf.keras.models.load_model('models/emotion_model.h5')
@@ -30,8 +31,7 @@ class EmotionDetector:
             self.model = None
             self.processor = None
         
-        genai.configure(api_key=gemini_api_key)
-        self.gemini_model = genai.GenerativeModel('gemini-2.5-flash')
+        self.openai_client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
         
         self.emotion_intensities = {
             'neutral': 0.3, 'calm': 0.4, 'happy': 0.7,
@@ -46,10 +46,14 @@ class EmotionDetector:
         Emotions: neutral,calm,happy,sad,angry,fearful,disgust,surprised
         """
         try:
-            response = self.gemini_model.generate_content(prompt)
-            return self._parse_gemini_emotion(response.text)
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.1
+            )
+            return self._parse_openai_emotion(response.choices[0].message.content)
         except Exception as e:
-            print(f"Gemini API Error (detect_text_emotion): {e}", flush=True)
+            print(f"OpenAI API Error (detect_text_emotion): {e}", flush=True)
             return {'primary_emotion': 'neutral', 'intensity': 0.3, 'confidence': 0.5}
     
     def detect_audio_emotion(self, audio_path):
@@ -106,13 +110,17 @@ Rules:
 Response:"""
         
         try:
-            response = self.gemini_model.generate_content(prompt)
-            return response.text.strip()
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7
+            )
+            return response.choices[0].message.content.strip()
         except Exception as e:
-            print(f"Gemini API Error (generate_response): {e}", flush=True)
+            print(f"OpenAI API Error (generate_response): {e}", flush=True)
             return f"I hear you're feeling {emotion}. That's valid. Try deep breathing: inhale 4s, hold 4s, exhale 4s. You're stronger than you know 💪"
     
-    def _parse_gemini_emotion(self, text):
+    def _parse_openai_emotion(self, text):
         try:
             json_match = re.search(r'\{[^}]*\}', text)
             if json_match:

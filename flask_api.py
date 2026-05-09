@@ -15,10 +15,10 @@ from emotion_detector import EmotionDetector
 app = Flask(__name__)
 CORS(app)
 
-# Initialize the detector
-api_key = os.getenv('GEMINI_API_KEY')
+# Initialize the detector using OpenAI
+api_key = os.getenv('OPENAI_API_KEY')
 if not api_key:
-    print("WARNING: GEMINI_API_KEY not found in environment. Please set it.")
+    print("WARNING: OPENAI_API_KEY not found in environment. Please set it.")
 
 detector = EmotionDetector(api_key)
 
